@@ -1,0 +1,6 @@
+{
+  "name": "LifeOS Pro",
+  "description": "1% Mastery Mobile App & Admin Panel with Focus Timer, Priority Matrix, 3-Pillar Analytics, and Diagnostic Engine.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Eisenhower Matrix - 4 Quadrants Task Manager</title>
+  <style>
+    :root {
+      --bg: #07090E;
+      --surface: #111420;
+      --surface-card: #161A29;
+      --border: #22283A;
+      --text-main: #FFFFFF;
+      --text-muted: #8E98B0;
+      
+      --q1-accent: #EF4444; /* Urgent & Important */
+      --q1-bg: rgba(239, 68, 68, 0.08);
+      --q1-border: rgba(239, 68, 68, 0.35);
+
+      --q2-accent: #10B981; /* Not Urgent & Important */
+      --q2-bg: rgba(16, 185, 129, 0.08);
+      --q2-border: rgba(16, 185, 129, 0.35);
+
+      --q3-accent: #F59E0B; /* Urgent & Not Important */
+      --q3-bg: rgba(245, 158, 11, 0.08);
+      --q3-border: rgba(245, 158, 11, 0.35);
+
+      --q4-accent: #6366F1; /* Not Urgent & Not Important */
+      --q4-bg: rgba(99, 102, 241, 0.08);
+      --q4-border: rgba(99, 102, 241, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      padding: 16px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .title-group h1 {
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      background: linear-gradient(135deg, #FFF, #A5B4FC);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .title-group p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px 14px;
+      font-size: 0.75rem;
+      align-items: center;
+    }
+
+    .stats-item span {
+      font-weight: 700;
+    }
+    .stats-q1 span { color: var(--q1-accent); }
+    .stats-q2 span { color: var(--q2-accent); }
+    .stats-q3 span { color: var(--q3-accent); }
+    .stats-q4 span { color: var(--q4-accent); }
+
+    /* Input Card */
+    .add-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .task-input {
+      flex: 1;
+      min-width: 220px;
+      background: #0B0E17;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #FFF;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .task-input:focus {
+      border-color: var(--q2-accent);
+    }
+
+    .quadrant-select {
+      background: #0B0E17;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #FFF;
+      font-size: 0.85rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .add-btn {
+      background: var(--q2-accent);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+
+    .add-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* 2x2 Grid Container */
+    .matrix-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      flex: 1;
+    }
+
+    @media (max-width: 720px) {
+      .matrix-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .quadrant {
+      background: var(--surface);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      min-height: 260px;
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+
+    .quadrant.drag-over {
+      background: rgba(255, 255, 255, 0.05);
+      border-style: dashed;
+    }
+
+    .q1 {
+      border: 1px solid var(--q1-border);
+      background: var(--q1-bg);
+    }
+    .q2 {
+      border: 1px solid var(--q2-border);
+      background: var(--q2-bg);
+    }
+    .q3 {
+      border: 1px solid var(--q3-border);
+      background: var(--q3-bg);
+    }
+    .q4 {
+      border: 1px solid var(--q4-border);
+      background: var(--q4-bg);
+    }
+
+    .quadrant-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .q-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .q1 .q-title { color: var(--q1-accent); }
+    .q2 .q-title { color: var(--q2-accent); }
+    .q3 .q-title { color: var(--q3-accent); }
+    .q4 .q-title { color: var(--q4-accent); }
+
+    .q-desc {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .q-badge {
+      background: rgba(0, 0, 0, 0.35);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .task-list {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+      min-height: 80px;
+    }
+
+    .task-item {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      cursor: grab;
+      user-select: none;
+      transition: background 0.2s, transform 0.15s, opacity 0.2s;
+    }
+
+    .task-item:active {
+      cursor: grabbing;
+    }
+
+    .task-item.dragging {
+      opacity: 0.4;
+      transform: scale(0.98);
+    }
+
+    .task-content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .task-checkbox {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--q2-accent);
+      cursor: pointer;
+    }
+
+    .task-title {
+      font-size: 0.85rem;
+      color: #FFF;
+      word-break: break-word;
+    }
+
+    .task-item.done .task-title {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .task-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .move-select {
+      background: #0B0E17;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      border-radius: 6px;
+      padding: 2px 4px;
+      cursor: pointer;
+    }
+
+    .del-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      line-height: 1;
+    }
+
+    .del-btn:hover {
+      color: var(--q1-accent);
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .empty-state {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #4A5568;
+      font-size: 0.8rem;
+      font-style: italic;
+      padding: 20px 0;
+    }
+
+    footer {
+      margin-top: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .secondary-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    .secondary-btn:hover {
+      color: #FFF;
+      border-color: #4A5568;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="title-group">
+      <h1>Eisenhower Matrix Grid</h1>
+      <p>Categorize tasks into Urgent vs Important</p>
+    </div>
+    <div class="stats-bar">
+      <div class="stats-item stats-q1">Q1: <span id="count-q1">0</span></div>
+      <div class="stats-item stats-q2">Q2: <span id="count-q2">0</span></div>
+      <div class="stats-item stats-q3">Q3: <span id="count-q3">0</span></div>
+      <div class="stats-item stats-q4">Q4: <span id="count-q4">0</span></div>
+    </div>
+  </header>
+
+  <!-- Add Task Form -->
+  <div class="add-card">
+    <div class="input-row">
+      <input type="text" id="task-input" class="task-input" placeholder="Type a new task (e.g., Complete mock test, File taxes)..." onkeypress="handleKeyPress(event)" />
+      <select id="quadrant-select" class="quadrant-select">
+        <option value="q1">Q1: Urgent & Important (Do First)</option>
+        <option value="q2" selected>Q2: Not Urgent & Important (Schedule)</option>
+        <option value="q3">Q3: Urgent & Not Important (Delegate)</option>
+        <option value="q4">Q4: Not Urgent & Not Important (Eliminate)</option>
+      </select>
+      <button class="add-btn" onclick="addNewTask()">+ Add Task</button>
+    </div>
+  </div>
+
+  <!-- 4 Quadrants 2x2 Grid -->
+  <main class="matrix-grid">
+
+    <!-- Quadrant 1 -->
+    <section class="quadrant q1" id="quadrant-q1" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="handleDrop(event, 'q1')">
+      <div class="quadrant-header">
+        <div>
+          <div class="q-title">🔥 Q1: DO FIRST</div>
+          <div class="q-desc">Urgent & Important (Crises & Deadlines)</div>
+        </div>
+        <div class="q-badge" id="badge-q1">0</div>
+      </div>
+      <div class="task-list" id="list-q1"></div>
+    </section>
+
+    <!-- Quadrant 2 -->
+    <section class="quadrant q2" id="quadrant-q2" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="handleDrop(event, 'q2')">
+      <div class="quadrant-header">
+        <div>
+          <div class="q-title">⭐ Q2: SCHEDULE</div>
+          <div class="q-desc">Not Urgent & Important (Strategic Focus & Mastery)</div>
+        </div>
+        <div class="q-badge" id="badge-q2">0</div>
+      </div>
+      <div class="task-list" id="list-q2"></div>
+    </section>
+
+    <!-- Quadrant 3 -->
+    <section class="quadrant q3" id="quadrant-q3" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="handleDrop(event, 'q3')">
+      <div class="quadrant-header">
+        <div>
+          <div class="q-title">⚡ Q3: DELEGATE</div>
+          <div class="q-desc">Urgent & Not Important (Interruptions & Chores)</div>
+        </div>
+        <div class="q-badge" id="badge-q3">0</div>
+      </div>
+      <div class="task-list" id="list-q3"></div>
+    </section>
+
+    <!-- Quadrant 4 -->
+    <section class="quadrant q4" id="quadrant-q4" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="handleDrop(event, 'q4')">
+      <div class="quadrant-header">
+        <div>
+          <div class="q-title">🗑️ Q4: ELIMINATE</div>
+          <div class="q-desc">Not Urgent & Not Important (Distractions & Waste)</div>
+        </div>
+        <div class="q-badge" id="badge-q4">0</div>
+      </div>
+      <div class="task-list" id="list-q4"></div>
+    </section>
+
+  </main>
+
+  <!-- Footer Actions -->
+  <footer>
+    <div>💡 Tip: Drag and drop tasks between quadrants or use the move selector.</div>
+    <div class="btn-group">
+      <button class="secondary-btn" onclick="clearCompleted()">Clear Done</button>
+      <button class="secondary-btn" onclick="resetDefaultTasks()">Reset Sample Tasks</button>
+      <button class="secondary-btn" onclick="exportJSON()">Export JSON</button>
+    </div>
+  </footer>
+
+  <script>
+    // Storage Key
+    const STORAGE_KEY = 'eisenhower_matrix_tasks_v1';
+
+    // Default Sample Tasks
+    const DEFAULT_TASKS = [
+      { id: 1, title: "Submit application before 5 PM deadline", quadrant: "q1", done: false },
+      { id: 2, title: "Deep study: 3 hours Rotational Dynamics", quadrant: "q2", done: false },
+      { id: 3, title: "Draft 90-day mastery roadmap & review KPIs", quadrant: "q2", done: false },
+      { id: 4, title: "Reply to non-critical vendor emails", quadrant: "q3", done: false },
+      { id: 5, title: "Aimless social media scrolling & feed checking", quadrant: "q4", done: true }
+    ];
+
+    // In-memory Task State
+    let tasks = loadTasks();
+
+    function loadTasks() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) return JSON.parse(saved);
+      } catch (e) {
+        console.error("Failed to load tasks", e);
+      }
+      return DEFAULT_TASKS;
+    }
+
+    function saveTasks() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+      } catch (e) {
+        console.error("Failed to save tasks", e);
+      }
+      renderMatrix();
+    }
+
+    function addNewTask() {
+      const input = document.getElementById('task-input');
+      const select = document.getElementById('quadrant-select');
+      const title = input.value.trim();
+      if (!title) return;
+
+      const newTask = {
+        id: Date.now(),
+        title: title,
+        quadrant: select.value,
+        done: false
+      };
+
+      tasks.unshift(newTask);
+      input.value = '';
+      saveTasks();
+    }
+
+    function handleKeyPress(e) {
+      if (e.key === 'Enter') {
+        addNewTask();
+      }
+    }
+
+    function toggleTask(id) {
+      tasks = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
+      saveTasks();
+    }
+
+    function deleteTask(id) {
+      tasks = tasks.filter(t => t.id !== id);
+      saveTasks();
+    }
+
+    function moveTask(id, targetQuadrant) {
+      tasks = tasks.map(t => t.id === id ? { ...t, quadrant: targetQuadrant } : t);
+      saveTasks();
+    }
+
+    function clearCompleted() {
+      tasks = tasks.filter(t => !t.done);
+      saveTasks();
+    }
+
+    function resetDefaultTasks() {
+      if (confirm("Reset to default sample tasks?")) {
+        tasks = [...DEFAULT_TASKS];
+        saveTasks();
+      }
+    }
+
+    function exportJSON() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tasks, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "eisenhower_tasks.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    // Drag and Drop
+    let draggedTaskId = null;
+
+    function handleDragStart(e, id) {
+      draggedTaskId = id;
+      e.target.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', id);
+    }
+
+    function handleDragEnd(e) {
+      e.target.classList.remove('dragging');
+      document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('drag-over'));
+    }
+
+    function allowDrop(e) {
+      e.preventDefault();
+      e.currentTarget.classList.add('drag-over');
+    }
+
+    function dragLeave(e) {
+      e.currentTarget.classList.remove('drag-over');
+    }
+
+    function handleDrop(e, targetQuadrant) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('drag-over');
+      if (draggedTaskId) {
+        moveTask(draggedTaskId, targetQuadrant);
+        draggedTaskId = null;
+      }
+    }
+
+    // Render Matrix UI
+    function renderMatrix() {
+      const quadrants = ['q1', 'q2', 'q3', 'q4'];
+      const counts = { q1: 0, q2: 0, q3: 0, q4: 0 };
+
+      quadrants.forEach(q => {
+        const listEl = document.getElementById(`list-${q}`);
+        listEl.innerHTML = '';
+        const qTasks = tasks.filter(t => t.quadrant === q);
+        counts[q] = qTasks.length;
+
+        document.getElementById(`badge-${q}`).textContent = qTasks.length;
+        document.getElementById(`count-${q}`).textContent = qTasks.length;
+
+        if (qTasks.length === 0) {
+          listEl.innerHTML = '<div class="empty-state">No tasks in this quadrant</div>';
+          return;
+        }
+
+        qTasks.forEach(task => {
+          const itemEl = document.createElement('div');
+          itemEl.className = `task-item ${task.done ? 'done' : ''}`;
+          itemEl.draggable = true;
+          itemEl.ondragstart = (e) => handleDragStart(e, task.id);
+          itemEl.ondragend = handleDragEnd;
+
+          itemEl.innerHTML = `
+            <div class="task-content">
+              <input type="checkbox" class="task-checkbox" ${task.done ? 'checked' : ''} onchange="toggleTask(${task.id})" />
+              <span class="task-title">${escapeHtml(task.title)}</span>
+            </div>
+            <div class="task-actions">
+              <select class="move-select" onchange="moveTask(${task.id}, this.value)" title="Move to Quadrant">
+                <option value="q1" ${task.quadrant === 'q1' ? 'selected' : ''}>Q1</option>
+                <option value="q2" ${task.quadrant === 'q2' ? 'selected' : ''}>Q2</option>
+                <option value="q3" ${task.quadrant === 'q3' ? 'selected' : ''}>Q3</option>
+                <option value="q4" ${task.quadrant === 'q4' ? 'selected' : ''}>Q4</option>
+              </select>
+              <button class="del-btn" onclick="deleteTask(${task.id})" title="Delete Task">&times;</button>
+            </div>
+          `;
+          listEl.appendChild(itemEl);
+        });
+      });
+    }
+
+    function escapeHtml(text) {
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+      return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    // Initial render
+    renderMatrix();
+  </script>
+</body>
+</html>
